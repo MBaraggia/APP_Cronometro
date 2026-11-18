@@ -155,7 +155,7 @@ th{font-weight:600;color:var(--muted);font-size:.82rem}
 :root[data-theme="dark"] .co-big.warn{color:var(--plate)}
 .co-sub{font-size:.95rem}
 .co-speed{display:inline-block;margin-top:8px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-variant-numeric:tabular-nums}
-.field input[type=time]{font-family:var(--cond);font-size:1.5rem;font-weight:600}
+.field input.hm{font-family:var(--cond);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .calc{border-top:1px dashed var(--line);margin-top:6px;padding-top:12px}
 .calc .row{align-items:flex-end}
 .btn.go{width:100%;margin-top:14px}
@@ -258,13 +258,13 @@ i.la{background:var(--runA)} i.lb{background:var(--runB)}
       <h3>Prossimo timbro</h3>
       <div class="box">
         <div class="row">
-          <div class="field"><label for="hTarget">Orario del timbro</label><input id="hTarget" type="time" step="60"></div>
+          <div class="field"><label for="hTarget">Orario del timbro</label><input id="hTarget" class="hm" type="text" inputmode="numeric" maxlength="5" placeholder="hh:mm" autocomplete="off"></div>
           <div class="field" style="max-width:170px"><label for="hKm">Km al timbro</label><input id="hKm" type="text" inputmode="decimal" maxlength="6" placeholder="es. 12,4"></div>
         </div>
         <div class="calc">
           <p class="hint">Oppure calcola l’orario: ultimo timbro più tempo imposto dalla tabella di marcia.</p>
           <div class="row">
-            <div class="field"><label for="hLast">Ultimo timbro</label><input id="hLast" type="time" step="60"></div>
+            <div class="field"><label for="hLast">Ultimo timbro</label><input id="hLast" class="hm" type="text" inputmode="numeric" maxlength="5" placeholder="hh:mm" autocomplete="off"></div>
             <div class="field"><label for="hDur">Tempo imposto (h:mm o minuti)</label><input id="hDur" inputmode="numeric" placeholder="0:35" maxlength="5"></div>
           </div>
           <div class="row">
@@ -381,7 +381,7 @@ i.la{background:var(--runA)} i.lb{background:var(--runB)}
 "use strict";
 const $=s=>document.querySelector(s);
 const LS="cronoPS.v1";
-const VERSION="1.0-debug", BUILD="pwa";
+const VERSION="1.0.1-debug", BUILD="pwa";
 
 /* ---------- storage ---------- */
 function load(){
@@ -783,7 +783,7 @@ function renderHistory(){
   for(let i=runs.length-1;i>=0;i--){
     const r=runs[i],prev=runs[i-1]; const dl=prev?r.total-prev.total:null;
     const day=new Date(r.date).toLocaleDateString("it-IT",{day:"numeric",month:"short"});
-    const start=r.startAt?tod(r.startAt):new Date(r.date).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+    const start=r.startAt?tod(r.startAt):tod(r.date).slice(0,5);
     h+='<div class="run"><button type="button" data-run="'+r.id+'" aria-expanded="'+(openRun===r.id)+'"><span class="tot">'+fmt(r.total)+(r.id===best.id?'<span class="best">migliore</span>':"")+'</span><span class="dl '+dCls(dl)+'">'+(dl==null?"":fmtD(dl))+'</span><span class="when">Passaggio '+(i+1)+", "+day+", partito alle "+start+", "+kmTxt(r.dist)+' km</span><span class="when" style="text-align:right">'+(dl==null?"":"sul precedente")+'</span></button>';
     if(openRun===r.id) h+=detail(r,prev,runs.filter(x=>x.id!==r.id));
     h+='</div>';
@@ -1105,6 +1105,19 @@ function updateHome(){
     else{$("#dMarLbl").textContent="Ritardo";dm.textContent=durTxt(eta-S.co.at-60000);dm.className="bad-t";}
   }
 }
+/* orari sempre in formato 24 ore hh:mm, senza AM/PM, qualunque sia la lingua del telefono */
+function maskHM(v){
+  v=String(v).replace(/[.,;]/g,":").replace(/[^\d:]/g,"");
+  const parts=v.split(":");
+  if(parts.length>1) return parts[0].slice(0,2)+":"+parts.slice(1).join("").slice(0,2);
+  const d=parts[0];
+  if(d.length<=2) return d.length===2&&+d>23?d[0]+":"+d[1]:d;
+  return +d.slice(0,2)<=23?d.slice(0,2)+":"+d.slice(2,4):d[0]+":"+d.slice(1,3);
+}
+document.querySelectorAll("input.hm").forEach(inp=>{
+  inp.addEventListener("input",()=>{const m=maskHM(inp.value);if(m!==inp.value)inp.value=m;});
+  inp.addEventListener("blur",()=>{if(!inp.value)return;const d=inp.value.replace(/\D/g,"");let s=parseHM(inp.value);if(s==null&&/^\d{3,4}$/.test(d))s=parseHM(d.padStart(4,"0").slice(0,2)+":"+d.padStart(4,"0").slice(2));if(s!=null)inp.value=hmTxt(s);});
+});
 $("#hGo").addEventListener("click",startTransfer);
 $("#hNow").addEventListener("click",()=>{$("#hLast").value=hmTxt(Math.floor((now()-midnight())/1000));saveCalc();});
 function saveCalc(){S.coCalc={last:$("#hLast").value,dur:$("#hDur").value.trim()};save();}
@@ -1354,3 +1367,4 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostnam
 </script>
 </body>
 </html>
+
