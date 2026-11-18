@@ -1,0 +1,15 @@
+CRONOMETRO PS 1.0-debug: versione installabile
+
+Questa cartella contiene l'app pronta per il telefono. Per usare il GPS e
+installarla serve un indirizzo https, quindi va pubblicata su un hosting
+statico (per esempio Netlify o GitHub Pages). Non serve nessun server.
+
+1. Pubblica la cartella (tutti i file insieme, index.html compreso).
+2. Apri l'indirizzo https dal telefono.
+   Android con Chrome: menu ⋮ > "Installa app" (o "Aggiungi a schermata Home").
+   iPhone con Safari: Condividi > "Aggiungi alla schermata Home".
+3. Apri l'app dall'icona e consenti l'accesso alla posizione.
+
+Dopo il primo avvio funziona anche senza internet.
+I dati restano sul telefono: usa "Diagnostica e dati" nella pagina Orario
+per esportarli o reimportarli.
